@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>災害復旧計画 テンプレ BCP</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold text-gray-800 mb-2">災害復旧計画（BCP）テンプレート</h1>
+  <p class="text-gray-500 mb-6">事業継続計画（BCP）の災害復旧計画をフォームで入力し、Markdownドキュメントに出力します</p>
+
+  <div class="flex gap-3 mb-6 flex-wrap">
+    <button id="save-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">💾 保存</button>
+    <button id="load-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm">📂 復元</button>
+    <button id="generate-btn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">📄 Markdown生成</button>
+    <button id="copy-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm hidden">📋 コピー</button>
+    <button id="load-sample" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm">サンプル読込</button>
+  </div>
+
+  <div class="space-y-6">
+    <!-- セクション1: 基本情報 -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-xl font-semibold text-red-700 mb-4">1. 基本情報</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">組織名 <span class="text-red-500">*</span></label>
+          <input type="text" id="org-name" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none" placeholder="例: 株式会社サンプル">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">BCP責任者</label>
+          <input type="text" id="bcp-owner" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none" placeholder="例: 総務部長 山田太郎">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">策定日</label>
+          <input type="date" id="plan-date" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">次回見直し日</label>
+          <input type="date" id="review-date" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">重要業務（中核業務）</label>
+          <textarea id="core-business" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none" placeholder="例: 製品出荷業務、顧客サポート、経理処理"></textarea>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">目標復旧時間（RTO: Recovery Time Objective）</label>
+          <input type="text" id="rto" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none" placeholder="例: 24時間以内に基本機能を復旧、72時間以内に全機能を復旧">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700 mb-1">目標復旧時点（RPO: Recovery Point Objective）</label>
+          <input type="text" id="rpo" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-300 focus:outline-none" placeholder="例: 障害発生前24時間以内のデータを復旧可能にする">
+        </div>
+      </div>
+    </section>
+
+    <!-- セクション2: リスク一覧 -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-xl font-semibold text-orange-700 mb-4">2. リスク一覧・影響度評価</h2>
+      <div id="risks-list" class="space-y-3 mb-3"></div>
+      <button id="add-risk" class="text-sm bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1 rounded" aria-label="リスク追加">＋ リスクを追加</button>
+    </section>
+
+    <!-- セクション3: 対応手順 -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-xl font-semibold text-blue-700 mb-4">3. 対応手順（フェーズ別）</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phase 1: 初動対応（0〜4時間）</label>
+          <textarea id="phase1" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none" placeholder="1. 安全確認・避難完了の確認&#10;2. 被害状況の把握&#10;3. BCP発動判断と責任者への報告"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phase 2: 緊急対応（4〜24時間）</label>
+          <textarea id="phase2" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none" placeholder="1. 代替拠点・テレワーク環境の確立&#10;2. 顧客・取引先への緊急連絡&#10;3. 重要データの確認とバックアップ検証"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Phase 3: 復旧対応（24時間〜）</label>
+          <textarea id="phase3" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none" placeholder="1. 基幹システムの段階的復旧&#10;2. 通常業務への移行計画策定&#10;3. 復旧状況の記録と報告"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- セクション4: 緊急連絡先 -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-xl font-semibold text-green-700 mb-4">4. 緊急連絡先</h2>
+      <div id="contacts-list" class="space-y-3 mb-3"></div>
+      <button id="add-contact" class="text-sm bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded" aria-label="連絡先追加">＋ 連絡先を追加</button>
+    </section>
+
+    <!-- セクション5: 訓練・見直し計画 -->
+    <section class="bg-white rounded-xl shadow p-6">
+      <h2 class="text-xl font-semibold text-purple-700 mb-4">5. 訓練・見直し計画</h2>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">定期訓練・見直し計画</label>
+        <textarea id="drill-plan" rows="4" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-300 focus:outline-none" placeholder="例: 年1回の全体訓練（毎年9月）&#10;半年に1回の連絡網確認テスト&#10;重大インシデント後の即時見直し"></textarea>
+      </div>
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">備考・特記事項</label>
+        <textarea id="notes" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-300 focus:outline-none" placeholder="法令要件・保険対応・行政届出事項など"></textarea>
+      </div>
+    </section>
+  </div>
+
+  <!-- Markdown出力 -->
+  <div id="output-area" class="hidden mt-6 bg-gray-900 text-green-300 rounded-xl shadow p-6">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="font-semibold text-green-400">生成された Markdown</h2>
+      <button id="close-output" class="text-gray-400 hover:text-gray-200 text-sm">✕ 閉じる</button>
+    </div>
+    <pre id="markdown-output" class="text-xs overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed max-h-96"></pre>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY='bcp-v1';
+let risks=[{type:'地震',likelihood:'高',impact:'大',action:''}];
+let contacts=[{name:'',role:'BCP責任者',phone:'',email:'',notes:''}];
+
+function sanitize(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function renderRisks(){
+  const el=document.getElementById('risks-list');
+  el.innerHTML='';
+  risks.forEach((r,i)=>{
+    const row=document.createElement('div');
+    row.className='border rounded-lg p-3 bg-orange-50 space-y-2';
+    row.innerHTML=`<div class="grid grid-cols-3 gap-2">
+      <input type="text" value="${sanitize(r.type)}" placeholder="リスク種別（地震・水害等）" class="border rounded px-2 py-1 text-sm" data-ri="${i}" data-field="type" aria-label="リスク種別">
+      <select data-ri="${i}" data-field="likelihood" class="border rounded px-2 py-1 text-sm" aria-label="発生可能性">
+        <option value="高" ${r.likelihood==='高'?'selected':''}>発生可能性: 高</option>
+        <option value="中" ${r.likelihood==='中'?'selected':''}>発生可能性: 中</option>
+        <option value="低" ${r.likelihood==='低'?'selected':''}>発生可能性: 低</option>
+      </select>
+      <div class="flex gap-2">
+        <select data-ri="${i}" data-field="impact" class="border rounded px-2 py-1 text-sm flex-1" aria-label="影響度">
+          <option value="大" ${r.impact==='大'?'selected':''}>影響: 大</option>
+          <option value="中" ${r.impact==='中'?'selected':''}>影響: 中</option>
+          <option value="小" ${r.impact==='小'?'selected':''}>影響: 小</option>
+        </select>
+        <button data-ri="${i}" class="remove-risk text-red-400 hover:text-red-600 px-2" aria-label="リスク削除">✕</button>
+      </div>
+    </div>
+    <input type="text" value="${sanitize(r.action)}" placeholder="対応策・軽減措置" class="border rounded px-2 py-1 text-sm w-full" data-ri="${i}" data-field="action" aria-label="対応策">`;
+    el.appendChild(row);
+  });
+  el.querySelectorAll('input,select').forEach(inp=>inp.addEventListener('input',e=>{risks[+e.target.dataset.ri][e.target.dataset.field]=e.target.value;}));
+  el.querySelectorAll('.remove-risk').forEach(btn=>btn.addEventListener('click',e=>{risks.splice(+e.target.dataset.ri,1);renderRisks();}));
+}
+
+function renderContacts(){
+  const el=document.getElementById('contacts-list');
+  el.innerHTML='';
+  contacts.forEach((c,i)=>{
+    const row=document.createElement('div');
+    row.className='border rounded-lg p-3 bg-green-50 grid grid-cols-1 gap-2';
+    row.innerHTML=`<div class="grid grid-cols-3 gap-2">
+      <input type="text" value="${sanitize(c.name)}" placeholder="氏名" class="border rounded px-2 py-1 text-sm" data-ci="${i}" data-field="name" aria-label="氏名">
+      <input type="text" value="${sanitize(c.role)}" placeholder="役割・部署" class="border rounded px-2 py-1 text-sm" data-ci="${i}" data-field="role" aria-label="役割">
+      <div class="flex gap-2">
+        <input type="tel" value="${sanitize(c.phone)}" placeholder="電話番号" class="border rounded px-2 py-1 text-sm flex-1" data-ci="${i}" data-field="phone" aria-label="電話番号">
+        <button data-ci="${i}" class="remove-contact text-red-400 hover:text-red-600 px-2" aria-label="連絡先削除">✕</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <input type="email" value="${sanitize(c.email)}" placeholder="メールアドレス" class="border rounded px-2 py-1 text-sm" data-ci="${i}" data-field="email" aria-label="メールアドレス">
+      <input type="text" value="${sanitize(c.notes)}" placeholder="備考（第2連絡先等）" class="border rounded px-2 py-1 text-sm" data-ci="${i}" data-field="notes" aria-label="備考">
+    </div>`;
+    el.appendChild(row);
+  });
+  el.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{contacts[+e.target.dataset.ci][e.target.dataset.field]=e.target.value;}));
+  el.querySelectorAll('.remove-contact').forEach(btn=>btn.addEventListener('click',e=>{contacts.splice(+e.target.dataset.ci,1);renderContacts();}));
+}
+
+function getFormData(){
+  return{
+    orgName:document.getElementById('org-name').value,
+    bcpOwner:document.getElementById('bcp-owner').value,
+    planDate:document.getElementById('plan-date').value,
+    reviewDate:document.getElementById('review-date').value,
+    coreBusiness:document.getElementById('core-business').value,
+    rto:document.getElementById('rto').value,
+    rpo:document.getElementById('rpo').value,
+    phase1:document.getElementById('phase1').value,
+    phase2:document.getElementById('phase2').value,
+    phase3:document.getElementById('phase3').value,
+    drillPlan:document.getElementById('drill-plan').value,
+    notes:document.getElementById('notes').value,
+  };
+}
+
+function generateMarkdown(d){
+  return`# 災害復旧計画（BCP）: ${d.orgName||'（組織名未入力）'}
+
+**策定日**: ${d.planDate||'—'}
+**次回見直し**: ${d.reviewDate||'—'}
+**BCP責任者**: ${d.bcpOwner||'—'}
+
+---
+
+## 1. 重要業務（中核業務）
+
+${d.coreBusiness||'（未入力）'}
+
+### 復旧目標
+
+| 指標 | 目標 |
+|------|------|
+| RTO（目標復旧時間） | ${d.rto||'—'} |
+| RPO（目標復旧時点） | ${d.rpo||'—'} |
+
+---
+
+## 2. リスク一覧・影響度評価
+
+| リスク種別 | 発生可能性 | 影響度 | 対応策・軽減措置 |
+|-----------|-----------|--------|----------------|
+${risks.map(r=>`| ${r.type} | ${r.likelihood} | ${r.impact} | ${r.action||'—'} |`).join('\n')}
+
+---
+
+## 3. 対応手順（フェーズ別）
+
+### Phase 1: 初動対応（0〜4時間）
+
+${d.phase1||'（未入力）'}
+
+### Phase 2: 緊急対応（4〜24時間）
+
+${d.phase2||'（未入力）'}
+
+### Phase 3: 復旧対応（24時間〜）
+
+${d.phase3||'（未入力）'}
+
+---
+
+## 4. 緊急連絡先
+
+| 氏名 | 役割 | 電話番号 | メール | 備考 |
+|------|------|---------|--------|------|
+${contacts.map(c=>`| ${c.name||'—'} | ${c.role||'—'} | ${c.phone||'—'} | ${c.email||'—'} | ${c.notes||'—'} |`).join('\n')}
+
+---
+
+## 5. 訓練・見直し計画
+
+${d.drillPlan||'（未入力）'}
+
+---
+
+## 6. 備考・特記事項
+
+${d.notes||'（なし）'}
+
+---
+
+*この文書は災害復旧計画（BCP）テンプレートによって生成されました。*
+*定期的な見直しと訓練の実施を推奨します。*
+`;
+}
+
+document.getElementById('add-risk').addEventListener('click',()=>{risks.push({type:'',likelihood:'中',impact:'中',action:''});renderRisks();});
+document.getElementById('add-contact').addEventListener('click',()=>{contacts.push({name:'',role:'',phone:'',email:'',notes:''});renderContacts();});
+
+document.getElementById('save-btn').addEventListener('click',()=>{
+  localStorage.setItem(STORAGE_KEY,JSON.stringify({...getFormData(),risks,contacts}));alert('保存しました');
+});
+
+document.getElementById('load-btn').addEventListener('click',()=>{
+  const d=localStorage.getItem(STORAGE_KEY);
+  if(!d){alert('保存データがありません');return;}
+  const p=JSON.parse(d);
+  document.getElementById('org-name').value=p.orgName||'';
+  document.getElementById('bcp-owner').value=p.bcpOwner||'';
+  document.getElementById('plan-date').value=p.planDate||'';
+  document.getElementById('review-date').value=p.reviewDate||'';
+  document.getElementById('core-business').value=p.coreBusiness||'';
+  document.getElementById('rto').value=p.rto||'';
+  document.getElementById('rpo').value=p.rpo||'';
+  document.getElementById('phase1').value=p.phase1||'';
+  document.getElementById('phase2').value=p.phase2||'';
+  document.getElementById('phase3').value=p.phase3||'';
+  document.getElementById('drill-plan').value=p.drillPlan||'';
+  document.getElementById('notes').value=p.notes||'';
+  risks=p.risks||[];contacts=p.contacts||[];
+  renderRisks();renderContacts();alert('復元しました');
+});
+
+document.getElementById('load-sample').addEventListener('click',()=>{
+  document.getElementById('org-name').value='株式会社サンプル商事';
+  document.getElementById('bcp-owner').value='総務部長 鈴木一郎';
+  document.getElementById('plan-date').value='2026-04-01';
+  document.getElementById('review-date').value='2027-04-01';
+  document.getElementById('core-business').value='1. 製品受注・出荷業務\n2. 顧客サポート（コールセンター）\n3. 経理・支払処理\n4. 情報システムの維持運用';
+  document.getElementById('rto').value='基幹業務: 24時間以内。全業務: 72時間以内。';
+  document.getElementById('rpo').value='最大24時間前のデータまで復旧可能とする（日次バックアップ前提）。';
+  document.getElementById('phase1').value='1. 従業員の安否確認（安否確認システム使用）\n2. 本社・各拠点の被害状況報告（30分以内）\n3. BCP発動要否の判断（BCP責任者）\n4. 経営幹部への状況報告';
+  document.getElementById('phase2').value='1. 代替業務拠点の立ち上げ（第2営業所を優先）\n2. テレワーク環境の展開（VPN接続確認）\n3. 主要顧客・取引先への状況連絡\n4. 優先業務の選別と要員配置';
+  document.getElementById('phase3').value='1. 基幹システムのバックアップからの復旧\n2. 通常業務体制への段階的移行\n3. インシデント記録の作成\n4. 原因分析と再発防止策の検討';
+  document.getElementById('drill-plan').value='年1回（9月防災月間）の全社BCP訓練\n半年ごとの連絡網テスト（3月・9月）\n新入社員研修でのBCP教育\n重大インシデント後30日以内の計画見直し';
+  document.getElementById('notes').value='個人情報保護法に基づくデータ管理手順別紙参照。\n事業所火災保険・BCP保険の内容を年次確認すること。\n消防計画との整合性を毎年確認。';
+  risks=[
+    {type:'大規模地震（震度6強以上）',likelihood:'中',impact:'大',action:'耐震補強・家具固定・備蓄品整備。代替拠点確保。'},
+    {type:'洪水・浸水（ハザードマップA区域）',likelihood:'中',impact:'大',action:'重要機器の高所設置。事前避難計画策定。'},
+    {type:'大規模停電（長期）',likelihood:'低',impact:'大',action:'UPS・自家発電機設置（72時間分）。クラウドサービス活用。'},
+    {type:'サイバー攻撃（ランサムウェア等）',likelihood:'高',impact:'中',action:'EDR導入・定期バックアップ（オフライン）・インシデントレスポンス契約。'},
+    {type:'主要サプライヤーの事業停止',likelihood:'低',impact:'中',action:'複数サプライヤーとの取引。代替調達先リスト整備。'},
+    {type:'パンデミック（感染症拡大）',likelihood:'中',impact:'中',action:'テレワーク体制整備。業務マニュアルの電子化。'}
+  ];
+  contacts=[
+    {name:'鈴木一郎',role:'BCP責任者（総務部長）',phone:'090-XXXX-XXXX',email:'suzuki@example.co.jp',notes:'不通時は副責任者の田中へ'},
+    {name:'田中花子',role:'BCP副責任者（IT部長）',phone:'090-YYYY-YYYY',email:'tanaka@example.co.jp',notes:''},
+    {name:'消防署（最寄り）',role:'緊急機関',phone:'119',email:'',notes:'住所: 〒XXX-XXXX 〇〇市...'},
+    {name:'警察署（最寄り）',role:'緊急機関',phone:'110',email:'',notes:''},
+    {name:'システム保守会社',role:'ITベンダー',phone:'03-XXXX-XXXX',email:'support@vendor.co.jp',notes:'24時間対応・契約No.12345'},
+  ];
+  renderRisks();renderContacts();
+});
+
+document.getElementById('generate-btn').addEventListener('click',()=>{
+  const md=generateMarkdown(getFormData());
+  document.getElementById('markdown-output').textContent=md;
+  const out=document.getElementById('output-area');
+  out.classList.remove('hidden');
+  document.getElementById('copy-btn').classList.remove('hidden');
+  out.scrollIntoView({behavior:'smooth'});
+});
+
+document.getElementById('copy-btn').addEventListener('click',()=>{
+  navigator.clipboard.writeText(document.getElementById('markdown-output').textContent).then(()=>alert('コピーしました')).catch(()=>alert('コピーに失敗しました'));
+});
+
+document.getElementById('close-output').addEventListener('click',()=>{
+  document.getElementById('output-area').classList.add('hidden');
+  document.getElementById('copy-btn').classList.add('hidden');
+});
+
+// 今日の日付をデフォルトに
+document.getElementById('plan-date').value=new Date().toISOString().split('T')[0];
+const nextYear=new Date();nextYear.setFullYear(nextYear.getFullYear()+1);
+document.getElementById('review-date').value=nextYear.toISOString().split('T')[0];
+
+renderRisks();
+renderContacts();
+</script>
+</body>
+</html>
